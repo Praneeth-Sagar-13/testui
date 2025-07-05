@@ -1,0 +1,73 @@
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+
+# pre-commit.ci cannot be used because it runs on all files, rather than just
+# the files added/modified by the PR. Instead, we use the deprecated pre-commit
+# action with arguments provided to limit it to the added/modified files.
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.3.0
+    hooks:
+      - id: trailing-whitespace
+        # The `bumpversion` command fails to commit its own changes to
+        # `.bumpversion.cfg` because it leaves some trailing whitespace.
+        exclude: (^\.bumpversion\.cfg$|cli_messages\.py)
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: pretty-format-json
+        args:
+          - "--autofix"
+          - "--indent=2"
+          - "--no-sort-keys"
+      - id: check-added-large-files
+      - id: check-merge-conflict
+      - id: check-toml
+      - id: debug-statements
+
+  - repo: https://github.com/pre-commit/mirrors-eslint
+    rev: v8.24.0 # Keep this in sync with the eslint "additional_dependency" below!
+    hooks:
+      - id: eslint
+        files: \.([jt]sx?|vue)$
+        entry: bash -c 'cd src/webapp && ARGS=("$@") && eslint --fix --config=.eslintrc.js "../../$0" "${ARGS[@]/#/../../}"'
+        types: [file]
+        require_serial: true
+        additional_dependencies:
+          - "@vue/eslint-config-prettier@7.0.0"
+          - "@vue/babel-preset-app@5.0.8"
+          - "@babel/eslint-parser@7.19.1"
+          - "eslint@8.24.0" # Keep this in sync with the rev above!
+          - "eslint-config-prettier@8.5.0"
+          - "eslint-plugin-prettier@4.2.1"
+          - "eslint-plugin-vue@9.5.1"
+          - "prettier@2.7.1"
+
+  - repo: https://github.com/psf/black
+    rev: 22.6.0
+    hooks:
+      - id: black
+        exclude: ^(src/meltano/migrations/)
+
+  - repo: https://github.com/pycqa/isort
+    rev: 5.10.1
+    hooks:
+      - id: isort
+
+  - repo: https://github.com/pycqa/flake8
+    rev: 4.0.1
+    hooks:
+      - id: flake8
+        additional_dependencies:
+          - wemake-python-styleguide==0.16.1
+        exclude: (src/meltano/migrations/versions/.*\.py)
+
+  - repo: https://github.com/asottile/pyupgrade
+    rev: v2.34.0
+    hooks:
+      - id: pyupgrade
+        args:
+          - "--py3-plus"
+          - "--py37-plus"
+          - "--keep-mock"
